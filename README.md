@@ -1,11 +1,10 @@
 
 Linux: [![Build Status](https://travis-ci.org/cgreen-devs/cgreen.svg?branch=master)](https://travis-ci.org/cgreen-devs/cgreen)
-Cygwin: [![Build Status](http://ci.alanif.se:8080/buildStatus/icon?job=Cgreen)](http://ci.alanif.se:8080/job/Cgreen/)
 
 [![Coverage Status](https://coveralls.io/repos/cgreen-devs/cgreen/badge.svg?branch=master&service=github)](https://coveralls.io/github/cgreen-devs/cgreen?branch=master)
 
-Cgreen - Modern Unit Test and Mocking Framework for C and C++
-=============================================================
+Cgreen - The Modern Unit Test and Mocking Framework for C and C++
+=================================================================
 
 Do you TDD? In C? Maybe you want to have your tests read out in a
 fluent fashion? Like this
@@ -83,7 +82,7 @@ If there is no licence agreement with this package please download
 a version from the location above. You must read and accept that
 licence to use this software. The file is titled simply LICENSE.
 
-## The Longer Version
+## The Original, Longer Version
 
 What is it? It's a framework for unit testing, written in C. A tool
 for C developers writing tests of their own code.
@@ -107,15 +106,13 @@ The other main extra feature is the support for writing mock
 callbacks. This includes generating sequences for return values
 or parameter expectations.
 
-Feedback and queries should be sent to the mail list at Sourceforge:
-cgreen-users@lists.sourceforge.net
-
-This project would not have happened without the generous
-financial support of the Wordtracker keyword tool...
-http://www.wordtracker.com/
+Feedback, queries and request should be put to the cgreen developers through
+https://github.com/cgreen-devs/cgreen.
 
 This tool is basically a spin off from a research project at
-Wordtracker.
+Wordtracker and would not have happened without the generous
+financial support of the Wordtracker keyword tool...
+http://www.wordtracker.com/
 
 Substantial inital work by Marcus Baker <marcus@lastcraft.com>. Recent
 additions by Matt Hargett <matt@use.net>, Thomas Nilsson

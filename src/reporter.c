@@ -17,6 +17,11 @@ namespace cgreen {
 enum { pass = 1, fail, completion, exception };
 enum { FINISH_NOTIFICATION_RECEIVED = 0, FINISH_NOTIFICATION_NOT_RECEIVED };
 
+struct TestContext_ {
+    TestReporter *reporter;
+};
+typedef struct TestContext_ TestContext;
+
 static TestContext context;
 
 static void show_pass(TestReporter *reporter, const char *file, int line, const char *message, va_list arguments);
@@ -35,10 +40,9 @@ void setup_reporting(TestReporter *reporter) {
 }
 
 void set_reporter_options(TestReporter *reporter, void *options) {
-    if (reporter->options != NULL)
-        free(reporter->options);
-    reporter->options = options;
-}
+    /* We should really copy the options locally to avoid caller to
+       free the area, but we don't know the size of it... */
+    reporter->options = options; }
 
 TestReporter *create_reporter() {
     CgreenBreadcrumb *breadcrumb;
@@ -158,8 +162,6 @@ static void show_incomplete(TestReporter *reporter, const char *file, int line, 
     (void)message;
     (void)arguments;
 }
-
-static const unsigned int MAX_ASSERTIONS_PER_TEST = 8100;
 
 static void assert_true(TestReporter *reporter, const char *file, int line, int result, const char *message, ...) {
     va_list arguments;

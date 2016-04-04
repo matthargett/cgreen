@@ -33,12 +33,6 @@ struct TestReporter_ {
 
 typedef void TestReportMemo;
 
-struct TestContext_ {
-    TestReporter *reporter;
-};
-
-typedef struct TestContext_ TestContext;
-
 TestReporter *create_reporter(void);
 TestReporter *get_test_reporter(void);
 void set_reporter_options(TestReporter *reporter, void *options);
@@ -46,8 +40,7 @@ void setup_reporting(TestReporter *reporter);
 void destroy_reporter(TestReporter *reporter);
 void destroy_memo(TestReportMemo *memo);
 void reporter_start(TestReporter *reporter, const char *name);
-void reporter_start_suite(TestReporter *reporter, const char *name,
-    const int count);
+void reporter_start_suite(TestReporter *reporter, const char *name, const int count);
 void reporter_finish(TestReporter *reporter, const char *filename, int line, const char *message,
                      uint32_t duration_in_milliseconds);
 void reporter_finish_suite(TestReporter *reporter, const char *filename, int line, uint32_t duration_in_milliseconds);

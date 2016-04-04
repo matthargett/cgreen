@@ -263,94 +263,9 @@ Ensure(Mocks, can_stub_an_out_parameter) {
     assert_that(&local, is_equal_to_contents_of(&actual, sizeof(LargerThanIntptr)));
 }
 
-Ensure(Mocks, learning_mocks_emit_none_when_learning_no_mocks) {
-    cgreen_mocks_are(learning_mocks);
-}
-
-Ensure(Mocks, learning_mocks_emit_pastable_code) {
-    cgreen_mocks_are(learning_mocks);
-    string_out(1);
-    string_out(2);
-    integer_out();
-    integer_out();
-    string_out(3);
-    integer_out();
-}
-
-/* It would be very nice it learning mocks could survive unexpected
-   terminations but since the child process is already gone when the
-   parent process detects this we need to either start catching
-   exceptions in the child or communicate the learned mock calls to
-   the parent some other way.
-
-Ensure(Mocks, learning_mocks_survive_termination) {
-    cgreen_mocks_are(learning_mocks);
-    string_out(1);
-    *(int*)0 = 0;
-}
-*/
-
-/* Expected fail tests follow. */
-/* TODO: put these in a separate suite and validate all tests in said suite fail during 'make check' */
-/*
-Ensure(Mocks, can_declare_function_never_called) {
-    never_expect(sample_mock);
-
-    sample_mock(0, "");
-}
-
-Ensure(Mocks, calls_beyond_expected_sequence_fail_when_mocks_are_strict) {
-    expect(integer_out,
-        will_return(1)
-    );
-
-    expect(integer_out,
-        will_return(2)
-    );
-
-    expect(integer_out,
-        will_return(3)
-    );
-
-    assert_that(integer_out(), is_equal_to(1));
-    assert_that(integer_out(), is_equal_to(2));
-    assert_that(integer_out(), is_equal_to(3));
-    // expected fail
-    assert_that(integer_out(), is_equal_to(3));
-}
-
-Ensure(Mocks, failure_when_no_presets_for_default_strict_mock) {
-    assert_that(integer_out(), is_equal_to(0));
-}
-
-Ensure(Mocks, failure_reported_when_expect_after_never_expect_for_same_function) {
-    never_expect(integer_out);
-
-    expect(integer_out);
-}
-
-Ensure(Mocks, failure_reported_when_expect_after_always_expect_for_same_function) {
-    always_expect(integer_out,
-        will_return(666)
-    );
-
-    expect(integer_out);
-}
-
-Ensure(Mocks, single_uncalled_expectation_fails_tally) {
-    expect(string_out,
-        will_return(5),
-        when(i, is_equal_to(666)),
-        when(s, is_equal_to_string("devil"))
-    );
-}
-*/
 
 TestSuite *mock_tests() {
     TestSuite *suite = create_test_suite();
-    add_test_with_context(suite, Mocks, learning_mocks_emit_none_when_learning_no_mocks);
-    add_test_with_context(suite, Mocks, learning_mocks_emit_pastable_code);
-    //    add_test_with_context(suite, Mocks, learning_mocks_survive_termination);
     add_test_with_context(suite, Mocks, default_return_value_when_no_presets_for_loose_mock);
     add_test_with_context(suite, Mocks, can_stub_an_integer_return);
     add_test_with_context(suite, Mocks, repeats_return_value_when_set_to_always);

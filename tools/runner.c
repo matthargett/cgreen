@@ -58,12 +58,6 @@ static void destroy_context_suites(ContextSuite *context_suite) {
 
 
 /*----------------------------------------------------------------------*/
-static bool is_cgreen_spec(const char* line) {
-    return strstr(line, CGREEN_SPEC_PREFIX) != NULL;
-}
-
-
-/*----------------------------------------------------------------------*/
 static char *context_name_of(const char* symbolic_name) {
     char *context_name;
 
@@ -136,8 +130,8 @@ static void add_test_to_context(TestSuite *parent, ContextSuite **context_suites
     TestSuite *suite_for_context = find_suite_for_context(*context_suites, context_name);
 
     if (suite_for_context == NULL) {
-	*context_suites = add_new_context_suite(parent, context_name, *context_suites);
-	suite_for_context = (*context_suites)->suite;
+        *context_suites = add_new_context_suite(parent, context_name, *context_suites);
+        suite_for_context = (*context_suites)->suite;
     }
     add_test_(suite_for_context, test_name, test);
 }
@@ -235,6 +229,11 @@ static int count(TestItem test_items[]) {
     return i;
 }
 
+/*----------------------------------------------------------------------*/
+static bool error_when_matching(int number_of_matches) {
+    return number_of_matches < 0;
+}
+
 
 /*----------------------------------------------------------------------*/
 static int run_tests(TestReporter *reporter, const char *suite_name, const char *symbolic_name,
@@ -243,9 +242,11 @@ static int run_tests(TestReporter *reporter, const char *suite_name, const char 
     ContextSuite *context_suites = NULL;
     TestSuite *suite = create_named_test_suite(suite_name);
 
-    const int number_of_matches = add_matching_tests_to_suite(test_library_handle, symbolic_name, test_items, suite, &context_suites);
-    if (number_of_matches < 0)
-	return EXIT_FAILURE;
+    const int number_of_matches = add_matching_tests_to_suite(test_library_handle, symbolic_name,
+                                                              test_items, suite, &context_suites);
+
+    if (error_when_matching(number_of_matches))
+        return EXIT_FAILURE;
 
     if (symbolic_name != NULL && number_of_matches == 1) {
         bool found = matching_test_exists(symbolic_name, test_items);
@@ -298,13 +299,29 @@ static int register_test(TestItem *test_items, int maximum_number_of_tests, char
 
 
 
-#if defined(__CYGWIN__) || defined(__APPLE__)
 // Cygwin and MacOSX nm lists external names with a leading '_'
-// which dlsym() doesn't want, so we'll include the '_' in the separator
-#  define NM_OUTPUT_COLUMN_SEPARATOR "D _"
-#else
-#  define NM_OUTPUT_COLUMN_SEPARATOR "D "
-#endif
+// which dlsym() doesn't want, so we'll have to remove that
+#define NM_SYMBOL_TYPE_FIELD " D "
+
+
+/*----------------------------------------------------------------------*/
+static char *name_start(const char *line) {
+    char *pos = (char *)strstr(line, NM_SYMBOL_TYPE_FIELD);
+    if (pos == NULL)
+        return NULL;
+
+    pos += strlen(NM_SYMBOL_TYPE_FIELD);
+    if (*pos == '_') pos++;
+    return pos;
+}
+
+
+/*----------------------------------------------------------------------*/
+static bool is_cgreen_spec_line(const char *line) {
+    return strstr(line, CGREEN_SPEC_PREFIX) != NULL
+        && name_start(line) != NULL;
+}
+
 
 /*----------------------------------------------------------------------*/
 // XXX: hack to use nm command-line utility for now.  Use libelf later.
@@ -326,8 +343,8 @@ static int discover_tests_in(const char* test_library, TestItem* test_items, con
 
     char line[1024];
     while (fgets(line, sizeof(line)-1, nm_output_pipe) != NULL) {
-        if (is_cgreen_spec(line)) {
-            char *specification_name = strstr(line, NM_OUTPUT_COLUMN_SEPARATOR) + strlen(NM_OUTPUT_COLUMN_SEPARATOR);
+        if (is_cgreen_spec_line(line)) {
+            char *specification_name = name_start(line);
             specification_name[strlen(specification_name) - 1] = 0; /* remove newline */
             if (verbose) {
                 char *suite_name = context_name_from_specname(specification_name);
@@ -339,14 +356,38 @@ static int discover_tests_in(const char* test_library, TestItem* test_items, con
                 free(function_name);
             }
             if (register_test(test_items, maximum_number_of_test_items, specification_name) < 0) {
-		ret = -1;
-		break;
-	    }
+                ret = -1;
+                break;
+            }
         }
     }
 
     pclose(nm_output_pipe);
     return ret;
+}
+
+
+/*----------------------------------------------------------------------*/
+void sort_test_items(TestItem test_items[]) {
+    int count;
+
+    for (count = 0; test_items[count].specification_name != NULL; count++);
+    if (count > 1) {
+        bool swap = true;
+        while (swap) {
+            int i;
+            swap = false;
+            for (i=0; test_items[i+1].specification_name != NULL; i++) {
+                if (strcmp(test_items[i].test_name, test_items[i+1].test_name) > 0) {
+                    TestItem temp;
+                    swap = true;
+                    temp = test_items[i];
+                    test_items[i] = test_items[i+1];
+                    test_items[i+1] = temp;
+                }
+            }
+        }
+    }
 }
 
 
@@ -373,11 +414,12 @@ int runner(TestReporter *reporter, const char *test_library_name,
         printf("Discovered %d test(s)\n", count(discovered_tests));
 
     if (!dont_run) {
+        sort_test_items(discovered_tests);
         if (verbose)
             printf("Opening [%s]", test_library_name);
         test_library_handle = dlopen(test_library_name, RTLD_NOW);
         if (test_library_handle == NULL) {
-            fprintf (stderr, "\nERROR: dlopen failure (error: %s)\n", dlerror());
+            fprintf(stderr, "\nERROR: dlopen failure when trying to run '%s' (error: %s)\n", test_library_name, dlerror());
             status = 2;
         } else {
             status = run_tests(reporter, suite_name, test_name, test_library_handle, discovered_tests, verbose);

@@ -92,6 +92,11 @@ static int initialize_option_handling(int argc, const char **argv) {
                                                             gopt_shorts('c'),
                                                             gopt_longs("colors")
                                                             ),
+                                                gopt_option('q',
+                                                            GOPT_NOARG,
+                                                            gopt_shorts('q'),
+                                                            gopt_longs("quiet")
+                                                            ),
                                                 gopt_option('n',
                                                             GOPT_NOARG,
                                                             gopt_shorts('n'),
@@ -154,10 +159,15 @@ int main(int argc, const char **argv) {
     if (gopt_arg(options, 'n', &tmp))
         no_run = true;
 
-    if (gopt_arg(options, 'c', &tmp))
+    if (gopt_arg(options, 'c', &tmp) && isatty(fileno(stdout)))
         reporter_options.use_colours = true;
     else
         reporter_options.use_colours = false;
+
+    if (gopt_arg(options, 'q', &tmp))
+        reporter_options.quiet_mode = true;
+    else
+        reporter_options.quiet_mode = false;
 
     if (gopt_arg(options, 'h', &tmp)) {
         usage(argv);
